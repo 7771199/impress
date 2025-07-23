@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>A Starry Message for You</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+            overscroll-behavior: none;
+        }
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(1.2em, 5vw, 1.5em);
+            text-align: center;
+            color: #fff;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            max-width: 90%;
+            word-wrap: break-word;
+        }
+        #prompt {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: clamp(0.9em, 4vw, 1em);
+            color: #ddd;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+            max-width: 90%;
+            text-align: center;
+        }
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+</head>
+<body>
+    <div id="canvas-container">
+        <div id="message"></div>
+        <div id="prompt">Tap the stars to see something special!</div>
+    </div>
+    <script>
+        let stars = [];
+        let reveal = false;
+        let heartPoints = [];
+        let currentLetter = 0;
+        const messageText = "You are Beautifull!";
+
+        function setup() {
+            let canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('canvas-container');
+            for (let i = 0; i < Math.min(100, windowWidth / 4); i++) {
+                stars.push(new Star());
+            }
+            generateHeartPoints();
+            canvas.elt.addEventListener('touchstart', handleTouch, { passive: false });
+        }
+
+        function draw() {
+            background(15, 12, 41);
+            for (let star of stars) {
+                star.update();
+                star.show();
+            }
+            if (reveal) {
+                drawHeart();
+                if (frameCount % 10 === 0 && currentLetter < messageText.length) {
+                    currentLetter++;
+                    document.getElementById('message').innerText = messageText.slice(0, currentLetter);
+                    document.getElementById('message').style.opacity = 1;
+                }
+            }
+        }
+
+        function mousePressed() {
+            if (!('ontouchstart' in window)) {
+                reveal = true;
+                document.getElementById('prompt').style.display = 'none';
+            }
+        }
+
+        function handleTouch(event) {
+            event.preventDefault();
+            reveal = true;
+            document.getElementById('prompt').style.display = 'none';
+        }
+
+        class Star {
+            constructor() {
+                this.x = random(width);
+                this.y = random(height);
+                this.z = random(width);
+                this.pz = this.z;
+            }
+
+            update() {
+                this.z -= Math.min(5, windowWidth / 100);
+                if (this.z < 1) {
+                    this.z = width;
+                    this.x = random(width);
+                    this.y = random(height);
+                    this.pz = this.z;
+                }
+            }
+
+            show() {
+                let sx = map(this.x / this.z, 0, 1, 0, width);
+                let sy = map(this.y / this.z, 0, 1, 0, height);
+                let r = map(this.z, 0, width, 4, 0);
+                noStroke();
+                fill(255, 255, 255, map(this.z, 0, width, 255, 0));
+                ellipse(sx, sy, r, r);
+            }
+        }
+
+        function generateHeartPoints() {
+            let scaleFactor = Math.min(windowWidth, windowHeight) / 25;
+            for (let a = 0; a < TWO_PI; a += 0.1) {
+                let x = width / 2 + scaleFactor * pow(sin(a), 3);
+                let y = height / 2 - scaleFactor * (13 * cos(a) - 5 * cos(2 * a) - 2 * cos(3 * a) - cos(4 * a)) / 16;
+                heartPoints.push(createVector(x, y));
+            }
+        }
+
+        function drawHeart() {
+            fill(255, 182, 193, 200);
+            noStroke();
+            beginShape();
+            for (let point of heartPoints) {
+                ellipse(point.x, point.y, 5, 5);
+            }
+            endShape();
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            heartPoints = [];
+            generateHeartPoints();
+        }
+    </script>
+</body>
+</html>
